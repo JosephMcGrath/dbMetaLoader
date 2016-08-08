@@ -1,6 +1,7 @@
 fetchMetadata <- function(pgConnectionIn,
                           metadataIn,
-                          metadataTable = "\"metadata\".\"metainfo\""
+                          metadataTable = "\"metadata\".\"metainfo\"",
+                          silent = FALSE
                           ){
 #Extracts the unique id for the metadata relating to an individual table from
 #   PostGreSQL. Assumes the metadata table exists.
@@ -9,16 +10,29 @@ fetchMetadata <- function(pgConnectionIn,
 #
     library("RPostgreSQL")
     
-    cat("Fetching metadata.\n")
+    if(!silent){
+        cat("Fetching metadata.\n")
+    }
     
-    #Doesn't actually stop if there's a problem!                                To do
-    checkMetadata(metadataIn)
+    if(!checkMetadata(metadataIn, silent = silent)){
+        stop("Invalid metadata provided - stopping.")
+    }
+    
+    if(!silent){
+        cat("Connecting to PostGreSQL database.")
+    }
     
     dbCon <- postGresConnect(pgConnectionIn)
     on.exit(dbDisconnect(dbCon))
-    #Assumes the table exists.                                                  To do
+    #Assumes the table exists. Should instead check is it's there.              To do
     
-        if(is.na(metadataIn["subset"])){
+    #May be able to use paste here, seeing as I can't use prepared queries.     To do
+    #   e.g. paste(names(metadataUse),
+    #              metadataUse,
+    #              sep = " = ",
+    #              collapse = " AND\n\t"
+    #              )
+    if(is.na(metadataIn["subset"])){
         res <- dbGetQuery(dbCon,
                           sprintf("SELECT
                                        id
@@ -55,8 +69,14 @@ fetchMetadata <- function(pgConnectionIn,
     
     if(nrow(res) > 0){
         ret <- res[1, "id"]
+        if(!silent){
+            cat(sprintf("Metadata found - id of: %s", ret))
+        }
     } else {
         ret <- NA
+        if(!silent){
+            cat("Metadata not found.")
+        }
     }
     
     return(ret)

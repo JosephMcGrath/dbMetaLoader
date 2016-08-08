@@ -2,7 +2,8 @@ buildPGConnection <- function(dbNameIn,
                               userNameIn,
                               passwordIn,
                               hostIn = 'localhost',
-                              portIn = "5432"
+                              portIn = "5432",
+                              silent = TRUE
                               ){
 #Puts together a list of values to define a PostGreSQL connection in a format
 #   that can be used by other functions (mainly through RPostgreSQL and ogr2ogr)
@@ -16,12 +17,28 @@ buildPGConnection <- function(dbNameIn,
              password = as.character(passwordIn)
              )
     
+    if(!silent){
+        cat(sprintf("Creating PostGreSQL connection object as: %s\n",
+                    paste(names(ret), ret, sep = " = ", collapse = ", ")
+                    )
+            )
+    }
+    
     return(ret)
 }
 
-buildMetaData <- function(tableIn, schemaIn, descriptionIn, providerIn,
-                          datasetIn, licenseIn, attributionIn, date_acquiredIn,
-                          date_generatedIn, subsetIn = NA){
+buildMetaData <- function(tableIn,
+                          schemaIn,
+                          descriptionIn,
+                          providerIn,
+                          datasetIn,
+                          licenseIn,
+                          attributionIn,
+                          date_acquiredIn,
+                          date_generatedIn,
+                          subsetIn = NA,
+                          silent = FALSE
+                          ){
 #Puts together the metadata for a table in a standardised format, including some
 #   information derived from the inputs.
 #
@@ -40,6 +57,13 @@ buildMetaData <- function(tableIn, schemaIn, descriptionIn, providerIn,
                 tablenameDq    = paste0("\"", schemaIn, "\".\"",tableIn,"\""),
                 tablenameSq    = paste0("'", schemaIn, "'.'",tableIn,"'")
                 )
+    
+    if(!silent){
+        cat(sprintf("Creating metadata object as: %s\n",
+                    paste(names(ret), ret, sep = " = ", collapse = ", ")
+                    )
+            )
+    }
     
     return(ret)
 }

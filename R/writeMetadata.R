@@ -1,6 +1,7 @@
 writeMetadata <- function(pgConnectionIn,
                           metadataIn,
-                          metadataTable = "\"metadata\".\"metainfo\""
+                          metadataTable = "\"metadata\".\"metainfo\"",
+                          silent = FALSE
                           ){
 #Writes the metadata record for a table into a PostGreSQL database from a set of
 #   standard lists. 
@@ -9,15 +10,21 @@ writeMetadata <- function(pgConnectionIn,
 #
     library("RPostgreSQL")
     
-    cat("Writing metadata.\n")
-    
-    #Doesn't actually stop if there's a problem!                                To do
-    checkMetadata(metadataIn)
+    if(!checkMetadata(metadataIn, silent = silent)){
+        stop("Invalid metadata provided - stopping.")
+    }
     
     dbCon <- postGresConnect(pgConnectionIn)
     on.exit(dbDisconnect(dbCon))
     
+    if(!silent){
+        cat("Writing metadata to database.")
+    }
+    
     #Assumes the table exists.                                                  To do
+    
+    #May be cleaner using paste to construct these, though would open up some   To do
+    #   security issues if this was open to external users.
     if(is.na(metadataIn$subset)){
         queryIn <- sprintf("INSERT INTO %s (
                                 tablename,
@@ -85,7 +92,9 @@ writeMetadata <- function(pgConnectionIn,
                            )
     }
     
-    cat(queryIn)
-    
     dbSendQuery(dbCon, queryIn)
+    
+    if(!silent){
+        cat("Metadata written.\n")
+    }
 }

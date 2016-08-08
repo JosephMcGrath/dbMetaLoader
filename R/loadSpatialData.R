@@ -2,7 +2,8 @@ loadSpatialData <- function(fileIn, pgConnectionIn,
                             metadataIn,
                             metadataTable = "\"metadata\".\"metainfo\"",
                             append = FALSE,
-                            multiGeom = FALSE){
+                            multiGeom = FALSE,
+                            silent = FALSE){
 #Loads a set of tables into the PostgreSQL database, attaching a metadata id to
 #   each row to tie back to the metadata table.
 #
@@ -10,21 +11,23 @@ loadSpatialData <- function(fileIn, pgConnectionIn,
     
     mdId <- fetchMetadata(pgConnectionIn,
                           metadataIn,
-                          metadataTable = "\"metadata\".\"metainfo\""
+                          metadataTable = "\"metadata\".\"metainfo\"",
+                          silent = silent
                           )
     
     if(is.na(mdId)){
         writeMetadata(pgConnectionIn,
                       metadataIn,
-                      metadataTable = "\"metadata\".\"metainfo\""
+                      metadataTable = "\"metadata\".\"metainfo\"",
+                          silent = silent
                       )
+        
         mdId <- fetchMetadata(pgConnectionIn,
                               metadataIn,
-                              metadataTable = "\"metadata\".\"metainfo\""
+                              metadataTable = "\"metadata\".\"metainfo\"",
+                          silent = silent
                               )
     }
-    
-    print(mdId)
     
     dsnString <- sprintf("PG: host=%s port='%s' dbname=%s user='%s' password='%s'",
                          pgConnectionIn["host"],
@@ -52,7 +55,7 @@ loadSpatialData <- function(fileIn, pgConnectionIn,
                                sqlName
                                ),
                  dialect = "SQLITE",
-                 verbose = TRUE
+                 verbose = !silent
                  )
     
     #Add option to append to the main function
@@ -71,7 +74,13 @@ loadSpatialData <- function(fileIn, pgConnectionIn,
         temp$a_srs = "EPSG:27700"
     }
     
-    print(temp)
+    if(!silent){
+        print(temp)
+        cat(sprintf("Parameters to pass to ogr2ogr:\n\t:%s",
+                    paste(names(temp), temp, sep = " = ", collapse = "\n\t")
+                    )
+            )
+    }
     #Does not seem to report error messages properly like this. Fails silently  To do
     do.call(ogr2ogr, temp)
     

@@ -6,8 +6,8 @@ checkListData <- function(dataName, dataIn, requiredFields, silent = FALSE){
 #
 #Returns TRUE if all attributes are present, FALSE if they are not.
 #
-    if(! (all(requiredFields %in% names(dataIn)) | silent)){
-        cat(paste0(sprintf("The following %s is missng: ", dataName),
+    if(!(all(requiredFields %in% names(dataIn)) | silent)){
+        cat(paste0(sprintf("The following %s is missing: ", dataName),
                    paste(requiredFields[!requiredFields %in% names(dataIn)],
                          collapse = ", "
                          ),
@@ -53,7 +53,7 @@ checkPGConnection <- function(pgConnectionIn,
 #
 #Returns TRUE if all attributes are present, FALSE if they are not.
 #
-    return(checkListData("postgres connection info",
+    return(checkListData("postgresql connection info",
                          pgConnectionIn,
                          requiredData,
                          silent

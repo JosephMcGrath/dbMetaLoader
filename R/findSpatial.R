@@ -1,7 +1,16 @@
-findSpatial <- function(dirIn, csvPath){
+findSpatial <- function(dirIn, csvPath, silent = FALSE){
+#Searches for spatial data in the path provided and extracts relevant metadata
+#   into a csv for storage.
+#
+#Returns nothing
+#
+#To do:
+# * Return a data frame that could be passed to another function for writing so
+#   that it could go to a csv or a database table.
+#
     filesIn <- list.files(dirIn, full.name = TRUE, recursive = TRUE)
     
-    #Currently not actually doing anything with 
+    #Currently not actually doing anything with non-zipped files.
     rawTables <- grep(spatialTables(), filesIn, value = TRUE)
     zipPaths <- grep("(?i)\\.zip$", filesIn, value = TRUE)
     

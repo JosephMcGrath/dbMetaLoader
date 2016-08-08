@@ -1,8 +1,13 @@
-loadFromCsv <- function(fileIn, pgConnectionIn){
+loadFromCsv <- function(fileIn, pgConnectionIn, silent = FALSE){
 #Extracts metadata information from a csv and uses that, along with a file path
 #   to load GIS data from external tables into the PostGreSQL database.
 #
 #Does not return anything, though updates the CSV file.
+#
+#To do:
+# * Split out into separate parts to 1 - fetch the metadata.
+#                                    2 - load the data.
+#                                    3 - update the external table.
 #
     metaTableFull <- read.csv(pathIn, stringsAsFactors = FALSE)
     metaTable <- metaTableFull[metaTableFull$loaded == 0, ]
@@ -40,14 +45,26 @@ loadFromCsv <- function(fileIn, pgConnectionIn){
             multiGeom <- FALSE
         }
         
-        cat(metaTemp$tablenameDq, "\n")
+        if(!silent){
+            cat(sprintf("Loading table: %s\n", metaTemp$tablenameDq)
+        }
         
         #Allow the use of a multi-part zip file via a delimiter                 To do
         if(length(grep("(?i)\\.zip$", metaTable[i, "path"])) > 0){
-            cat("Zip file!")
-            print(metaTable[i, "path"])
-            print(tempUnzip(metaTable[i, "path"]))
+            if(!silent){
+                cat(sprintf("Extracting zip file from: %s\n",
+                            metaTable[i, "path"]
+                            )
+                    )
+            }
+            
             metaTable[i, "path"] <- tempUnzip(metaTable[i, "path"])
+            
+            if(!silent){
+                cat(sprintf("Zip file now located at: %s\n",
+                            metaTable[i, "path"])
+                    )
+            }
             
             loadSpatialData(fileIn = metaTable[i, "path"],
                             pgConnectionIn = pgCon,
@@ -69,7 +86,10 @@ loadFromCsv <- function(fileIn, pgConnectionIn){
             
             metaTableFull[metaTableFull["table"] == metaTable[i, "table"], "loaded"] <- 1
         } else {
-            cat("Not zip file!")
+            if(!silent){
+                cat(sprintf("Loading file from: %s\n", metaTable[i, "path"]))
+            }
+            
             loadSpatialData(fileIn = metaTable[i, "path"],
                             pgConnectionIn = pgCon,
                             metadataIn = metaTemp,
