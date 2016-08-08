@@ -46,7 +46,7 @@ loadFromCsv <- function(fileIn, pgConnectionIn, silent = FALSE){
         }
         
         if(!silent){
-            cat(sprintf("Loading table: %s\n", metaTemp$tablenameDq)
+            cat(sprintf("Loading table: %s\n", metaTemp$tablenameDq))
         }
         
         #Allow the use of a multi-part zip file via a delimiter                 To do
