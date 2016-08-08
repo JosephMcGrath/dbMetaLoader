@@ -1,9 +1,11 @@
-loadSpatialData <- function(fileIn, pgConnectionIn,
+loadSpatialData <- function(fileIn,
+                            pgConnectionIn,
                             metadataIn,
                             metadataTable = "\"metadata\".\"metainfo\"",
                             append = FALSE,
                             multiGeom = FALSE,
-                            silent = FALSE){
+                            silent = FALSE
+                            ){
 #Loads a set of tables into the PostgreSQL database, attaching a metadata id to
 #   each row to tie back to the metadata table.
 #

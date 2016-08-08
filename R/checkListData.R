@@ -53,6 +53,9 @@ checkPGConnection <- function(pgConnectionIn,
 #
 #Returns TRUE if all attributes are present, FALSE if they are not.
 #
+#To do:
+# * Try to connect using the information given?
+#
     return(checkListData("postgresql connection info",
                          pgConnectionIn,
                          requiredData,

@@ -58,6 +58,10 @@ buildMetaData <- function(tableIn,
                 tablenameSq    = paste0("'", schemaIn, "'.'",tableIn,"'")
                 )
     
+    #Replace copyright symbol with (C) as it causes errors otherwise.
+    ret$attribution <- gsub(intToUtf8(strtoi("0xA9")), "(C)", ret)
+    #Could also replace other characters that cause issues.                     To do
+    
     if(!silent){
         cat(sprintf("Creating metadata object as: %s\n",
                     paste(names(ret), ret, sep = " = ", collapse = ", ")

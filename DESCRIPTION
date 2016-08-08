@@ -1,0 +1,10 @@
+Package: dbMetaLoader
+Version: 0.1-0
+License: GPL (>=3)
+Description: A set of scripts to automate and extend the loading of data into PostGIS using ogr2ogr. Adds the capability to load data in alongside metadata from an external list of files such as a CSV.
+Title: dbMetaLoader
+Author: Joseph McGrath
+Maintainer: Joseph McGrath <joseph.mcgrath@outlook.com>
+Date: 2018.08.08
+Depends: R (>= 3.3.0), RPostgreSQL, gdalUtils
+URL: https://github.com/JosephMcGrath/dbMetaLoader
