@@ -65,8 +65,6 @@ resolveRow <- function(tableIn, rowIn, tmpdir = tempdir()){
         
         dirOut <- tempfile(pattern = "temp_extract_", tmpdir = tmpdir)
         
-        cat("\n", dirOut, "\n\n")
-        
         toUnzip <- unzip(tableOut[rowIn, "tempCon"], list = TRUE)$Name
         toUnzip <- grep(spatialTables(c("table", "tempCon")),
                         toUnzip,
@@ -81,8 +79,6 @@ resolveRow <- function(tableIn, rowIn, tmpdir = tempdir()){
         
         tableOut[sharedSource, "tempCon"] <- dirOut
         
-        print(tableOut[rowIn, ])
-        
     }
     
     #2 Produce a list of all items in the current data set.
@@ -92,7 +88,6 @@ resolveRow <- function(tableIn, rowIn, tmpdir = tempdir()){
     } else {
         pathUse <- tableOut[rowIn, "dsn"]
     }
-    print(pathUse)
     
     #If it's a directory
     if(dir.exists(pathUse)){
