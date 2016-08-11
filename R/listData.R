@@ -1,7 +1,8 @@
 listTables <- function(dirIn,
                        maxLevel = 1,
                        delimiter = "$",
-                       tmpdir = tempdir()
+                       tmpdir = tempdir(),
+                       cleanUp = TRUE
                        ){
     
     #Manually work this out later if it's starting another level down?          To do
@@ -37,6 +38,19 @@ listTables <- function(dirIn,
         toResolve <- !tableUse[, "resolved"] &
                      tableUse[, "type"] == "container" &
                      tableUse[, "level"] <= maxLevel
+    }
+    
+    #Remove all temporary files
+    if(cleanUp){
+        toRemove <- grep("(\\\\||/)temp_extract_",
+                         list.files(tmpdir,
+                                    recursive = TRUE,
+                                    full.name = TRUE
+                                    ),
+                         value = TRUE
+                         )
+        
+        file.remove(toRemove)
     }
     
     return(tableUse)
