@@ -1,106 +1,28 @@
-resolveZip <- function(tableIn, rowIn){
-    contents <- unzip(tableIn[rowIn, "dsn"], list = TRUE)$Name
+listTables <- function(dirIn,
+                       maxLevel = 1,
+                       delimiter = "$",
+                       tmpdir = tempdir()
+                       ){
     
-    tablesOut <- grep(spatialTables(type = "table"),
-                      contents,
-                      value = TRUE
-                      )
+    #Manually work this out later if it's starting another level down?          To do
+    initialLevel <- 0
     
-    tablesOut <- tablesOut[!tablesOut %in% tableIn[, "dsn"]]
-    
-    if(length(tablesOut) > 0){
-            newTables <- data.frame(dsn = paste(tableIn[rowIn, "dsn"],
-                                                tablesOut,
-                                                sep = "$"
-                                                ),
-                                    type = "table",
-                                    level = tableIn[rowIn, "level"],
-                                    resolved = FALSE,
-                                    stringsAsFactors  = FALSE
-                                    )
-            tableIn <- rbind(tableIn, newTables)
-    }
-    
-    return(tableIn)
-}
-
-resolveRow <- function(tableIn, rowIn){
-    tableIn[rowIn, "resolved"] <- TRUE
-    
-    #Simple file systems
-    if(dir.exists(tableIn[rowIn, "dsn"])){
-        contents <- list.files(tableIn[rowIn, "dsn"],
-                               full.name = TRUE,
-                               recursive = TRUE
-                               )
-        
-        #Deal with simple tables first
-        tablesOut <- grep(spatialTables(type = "table"),
-                          contents,
-                          value = TRUE
-                          )
-        
-        tablesOut <- tablesOut[!tablesOut %in% tableIn[, "dsn"]]
-        
-        if(length(tablesOut) > 0){
-            newTables <- data.frame(dsn = tablesOut,
-                                    type = "table",
-                                    level = tableIn[rowIn, "level"],
-                                    resolved = FALSE,
-                                    stringsAsFactors  = FALSE
-                                    )
-            tableIn <- rbind(tableIn, newTables)
-        }
-        
-        #Then deal with containers
-        tablesOut <- grep(spatialTables(type = "container"),
-                          contents,
-                          value = TRUE
-                          )
-        
-        tablesOut <- tablesOut[!tablesOut %in% tableIn[, "dsn"]]
-        
-        if(length(tablesOut) > 0){
-            newTables <- data.frame(dsn = tablesOut,
-                                    type = "container",
-                                    level = tableIn[rowIn, "level"] + 1,
-                                    resolved = FALSE,
-                                    stringsAsFactors  = FALSE
-                                    )
-            tableIn <- rbind(tableIn, newTables)
-        }
-    } else {
-        #Zip archives
-        if(grep("(?i)\\.zip$", tableIn[rowIn, "dsn"])){
-            tableIn <- resolveZip(tableIn, rowIn)
-        }
-    }
-    
-    return(tableIn)
-}
-
-listTables <- function(dataIn, maxLevel = 1){
-    #Not quite sure the best way to handle a PostGreSQL data source yet         To do
-    
-    initialLevel <- rep(0, length(dataIn))
-    
-    #Convert the input to a data frame
-    if(class(dataIn) == "character"){
-        tableUse <- data.frame(dsn = dataIn,
-                               type = rep("container", length(dataIn)),
+    if(class(dirIn) == "character"){
+        tableUse <- data.frame(dsn = dirIn,
+                               type = "container",
+                               container = NA,
+                               tempCon = NA,
                                level = initialLevel,
-                               resolved = rep(FALSE, length(dataIn)),
+                               resolved = FALSE,
                                stringsAsFactors  = FALSE
                                )
-    } else if (class(dataIn) == "data.frame"){
-        stop("Data frame support not yet implemented.")
+    } else {
+        stop("dirIn must be a character vector.")
     }
     
     toResolve <- !tableUse[, "resolved"] &
                  tableUse[, "type"] == "container" &
                  tableUse[, "level"] <= maxLevel
-    
-    #Filter out any non-unique rows                                             To do
     
     while(any(toResolve)){
         
@@ -108,14 +30,136 @@ listTables <- function(dataIn, maxLevel = 1){
             if(!toResolve[i]){
                 next
             }
-            print(tableUse[i, ])
             
-            tableUse <- resolveRow(tableUse, i)
+            tableUse <- resolveRow(tableUse, i, tmpdir = tmpdir)
         }
         
         toResolve <- !tableUse[, "resolved"] &
                      tableUse[, "type"] == "container" &
                      tableUse[, "level"] <= maxLevel
     }
+    
     return(tableUse)
+}
+
+resolveRow <- function(tableIn, rowIn, tmpdir = tempdir()){
+    tableOut <- tableIn
+    
+    #1 If the source of the current data set is a zip file, extract it to a
+    #   temporary location.
+    if(length(grep("(?i)\\.zip$", tableIn[rowIn, "tempCon"]))){
+        
+        dirOut <- tempfile(pattern = "temp_extract_", tmpdir = tmpdir)
+        
+        cat("\n", dirOut, "\n\n")
+        
+        toUnzip <- unzip(tableOut[rowIn, "tempCon"], list = TRUE)$Name
+        toUnzip <- grep(spatialTables(c("table", "tempCon")),
+                        toUnzip,
+                        value = TRUE
+                        )
+        
+        unzip(tableOut[rowIn, "tempCon"], files = toUnzip, exdir = dirOut)
+        
+        #Update the tempCon to represent the folder it's being stored in.
+        sharedSource <- tableOut[, "tempCon"] == tableOut[rowIn, "tempCon"]
+        sharedSource <- sharedSource & !is.na(sharedSource)
+        
+        tableOut[sharedSource, "tempCon"] <- dirOut
+        
+        print(tableOut[rowIn, ])
+        
+    }
+    
+    #2 Produce a list of all items in the current data set.
+    
+    if(!is.na(tableOut[rowIn, "tempCon"])){
+        pathUse <- file.path(tableOut[rowIn, "tempCon"], tableOut[rowIn, "dsn"])
+    } else {
+        pathUse <- tableOut[rowIn, "dsn"]
+    }
+    print(pathUse)
+    
+    #If it's a directory
+    if(dir.exists(pathUse)){
+        filesIn <- list.files(pathUse,
+                              recursive = TRUE#,
+                              #full.name = TRUE
+                              )
+    #If it's a zip files
+    } else if(grep("(?i)\\.zip$", pathUse)){
+        filesIn <- unzip(pathUse, list = TRUE)$Name
+    }
+    
+    #3 Use that list to get a full list of all tables and containers.
+    #Get all of the tables
+    tablesOut <- grep(spatialTables("table"), filesIn, value = TRUE)
+    
+    tablesOut <- tablesOut[!tablesOut %in% tableOut[, "dsn"]]
+    
+    #Get all the containers
+    containersOut <- grep(spatialTables("container"), filesIn, value = TRUE)
+    
+    containersOut <- containersOut[!containersOut %in% tableOut[, "dsn"]]
+    
+    #4 Add those to the output table.
+    if(length(tablesOut) > 0){
+        tableUse <- data.frame(dsn = tablesOut,
+                               type = "table",
+                               container = delimitPath(tableOut[rowIn,
+                                                                "container"
+                                                                ],
+                                                       tableOut[rowIn, "dsn"]
+                                                       ),
+                               tempCon = delimitPath(tableOut[rowIn, "tempCon"],
+                                                     tableOut[rowIn, "dsn"]
+                                                     ),
+                               level = tableOut[rowIn, "level"],
+                               resolved = FALSE,
+                               stringsAsFactors  = FALSE
+                               )
+        tableOut <- rbind(tableOut, tableUse)
+    }
+    
+    if(length(containersOut) > 0){
+        tableUse <- data.frame(dsn = containersOut,
+                               type = "container",
+                               container = delimitPath(tableOut[rowIn,
+                                                                "container"
+                                                                ],
+                                                       tableOut[rowIn, "dsn"]
+                                                       ),
+                               tempCon = delimitPath(tableOut[rowIn, "tempCon"],
+                                                     tableOut[rowIn, "dsn"]
+                                                     ),
+                               level = tableOut[rowIn, "level"] + 1,
+                               resolved = FALSE,
+                               stringsAsFactors  = FALSE
+                               )
+        tableOut <- rbind(tableOut, tableUse)
+    }
+    
+    
+    tableOut[rowIn, "resolved"] <- TRUE
+    
+    return(tableOut)
+}
+
+delimitPath <- function(currentPath, newPath, delimiter = "$"){
+    if(is.na(currentPath)){
+        ret <- newPath
+    } else {
+        if(length(grep(spatialTables("container"),
+                       currentPath,
+                       invert = TRUE
+                       )
+                  )
+           ){
+            ret <- file.path(currentPath, newPath)
+        } else {
+            ret <- paste(currentPath, newPath, sep = delimiter)
+        }
+    }
+    
+    return(ret)
 }
