@@ -5,6 +5,8 @@ extractMetadata <- function(dirIn,
                             cleanUp = TRUE
                             ){
     
+    #Use on.exit() for cleanUp?
+    
     #Create list of all files
     dataList <- listTables(dirIn = dirIn,
                            maxLevel = maxLevel,
@@ -23,12 +25,12 @@ extractMetadata <- function(dirIn,
             next
         }
         
-        print(dataList[i, ])
-        
-        temp <- data.frame(path = delimitPath(dataList[i, "container"], dataList[i, "dsn"]),
-                           schema = NA, #The containing folder. Maybe go for the last non-zip?
-                           table = NA, #Name of the file itself.
-                           subset = NA, #Maybe assign one after several layers of zip files?
+        #Also pull over rowid for each so it can be traced back
+        temp <- data.frame(scan_row = i,
+                           path = delimitPath(dataList[i, "container"], dataList[i, "dsn"]),
+                           schema = NA,
+                           table = NA,
+                           subset = NA,
                            description = NA, #Can't automate this reasonably.
                            provider = NA, #Similar to the schema.
                            dataset = NA, #Can't really automate this one? Maybe one layer down from the provider?
@@ -36,7 +38,7 @@ extractMetadata <- function(dirIn,
                            #format(tempContents[spatialData, ]$Date, format = "%Y/%m/%d")
                            license = NA,
                            attribution = NA,
-                           date_acquired = NA, #Date of the highest level zip?
+                           date_acquired = NA,
                            multigeom = 0, #Would be great to be able to automate this.
                            append = 0,
                            loaded = -1,
@@ -52,6 +54,29 @@ extractMetadata <- function(dirIn,
         
     }
     
+    #Pull out most of the metadata
+    topPaths <- unlist(lapply(strsplit(ret$path, delimiter, fixed = TRUE), head, 1))
+    
+    acquiredDates <- format(file.info(topPaths)$ctime, format = "%Y/%m/%d")
+    
+    noExtension <- gsub(spatialTables(c("table", "container")), "", topPaths)
+    
+    tableNames <- unlist(lapply(strsplit(noExtension, "\\\\|/"), tail, 1))
+    tableNames <- tolower(tableNames)
+    tableNames <- gsub(" ", "_", tableNames)
+    
+    schemaNames <- lapply(strsplit(noExtension, "\\\\|/"), tail, 2)
+    schemaNames <- unlist(lapply(schemaNames, head, 1))
+    schemaNames <- tolower(schemaNames)
+    schemaNames <- gsub(" ", "_", schemaNames)
+    
+    providerNames <- providerFormat(schemaNames)
+    
+    ret$date_acquired <- acquiredDates
+    ret$table <- tableNames
+    ret$schema <- schemaNames
+    ret$provider <- providerNames
+    
     #Remove all temporary files
     if(cleanUp){
         toRemove <- grep("(\\\\||/)temp_extract_",
@@ -63,6 +88,19 @@ extractMetadata <- function(dirIn,
                          )
         
         file.remove(toRemove)
+    }
+    
+    return(ret)
+}
+
+providerFormat <- function(textIn){
+    textUse  <- gsub("_", " ", textIn)
+    
+    textList <- strsplit(textUse, " ")
+    
+    ret <- rep("", length(textList))
+    for(i in 1:length(textList)){
+        ret[i] <- paste(toupper(substring(textList[[i]], 1, 1)), tolower(substring(textList[[i]], 2)), sep = "", collapse = " ")
     }
     
     return(ret)
