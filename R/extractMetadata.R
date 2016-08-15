@@ -27,24 +27,38 @@ extractMetadata <- function(dirIn,
         
         #Also pull over rowid for each so it can be traced back
         temp <- data.frame(scan_row = i,
-                           path = delimitPath(dataList[i, "container"], dataList[i, "dsn"]),
+                           path = delimitPath(dataList[i, "container"],
+                                              dataList[i, "dsn"]
+                                              ),
                            schema = NA,
                            table = NA,
                            subset = NA,
-                           description = NA, #Can't automate this reasonably.
-                           provider = NA, #Similar to the schema.
-                           dataset = NA, #Can't really automate this one? Maybe one layer down from the provider?
-                           date_generated = NA, #Date of the file within the zip.
-                           #format(tempContents[spatialData, ]$Date, format = "%Y/%m/%d")
+                           description = NA,
+                           provider = NA,
+                           dataset = NA,
+                           date_generated = NA,
                            license = NA,
                            attribution = NA,
                            date_acquired = NA,
-                           multigeom = 0, #Would be great to be able to automate this.
+                           multigeom = 0,
                            append = 0,
                            loaded = -1,
                            assignSRS = "EPSG:27700",
                            stringsAsFactors  = FALSE
                            )
+        
+        #Pull out the time generated
+        if(length(grep("(?i)\\.zip$", dataList[i, "tempCon"]))){
+            contents <- unzip(dataList[i, "tempCon"], list = TRUE)
+            contents <- contents[contents$Name == dataList[i, "dsn"], "Date"]
+            temp$date_generated <- format(contents, format = "%Y/%m/%d")
+        }
+        
+        if(dir.exists(dataList[i, "tempCon"])){
+            temp$date_generated <- format(file.info(temp$path)$ctime,
+                                          format = "%Y/%m/%d"
+                                          )
+        }
         
         if(exists("ret")){
             ret <- rbind(ret, temp)
@@ -55,7 +69,13 @@ extractMetadata <- function(dirIn,
     }
     
     #Pull out most of the metadata
-    topPaths <- unlist(lapply(strsplit(ret$path, delimiter, fixed = TRUE), head, 1))
+    topPaths <- unlist(lapply(strsplit(ret$path,
+                                       delimiter,
+                                       fixed = TRUE
+                                       ),
+                              head, 1
+                              )
+                       )
     
     acquiredDates <- format(file.info(topPaths)$ctime, format = "%Y/%m/%d")
     
@@ -100,8 +120,30 @@ providerFormat <- function(textIn){
     
     ret <- rep("", length(textList))
     for(i in 1:length(textList)){
-        ret[i] <- paste(toupper(substring(textList[[i]], 1, 1)), tolower(substring(textList[[i]], 2)), sep = "", collapse = " ")
+        ret[i] <- paste(toupper(substring(textList[[i]], 1, 1)),
+                        tolower(substring(textList[[i]], 2)),
+                        sep = "",
+                        collapse = " "
+                        )
     }
     
     return(ret)
+}
+
+extractToCsv <- function(dirIn, pathOut, maxLevel = 1, overwrite = FALSE){
+    
+    outputRows <- extractMetadata(dirIn, maxLevel = maxLevel, cleanUp = TRUE)
+    
+    newFile <- file.exists(pathOut) & !overwrite
+    
+    write.table(x = outputRows,
+                file = pathOut,
+                sep = ",",
+                append = newFile,
+                na = "",
+                row.names = FALSE,
+                col.names = !newFile
+                )
+    
+    return(pathOut)
 }
