@@ -4,6 +4,7 @@ loadSpatialData <- function(fileIn,
                             metadataTable = "\"metadata\".\"metainfo\"",
                             append = FALSE,
                             multiGeom = FALSE,
+                            srsIn = NA,
                             silent = FALSE
                             ){
 #Loads a set of tables into the PostgreSQL database, attaching a metadata id to
@@ -70,10 +71,8 @@ loadSpatialData <- function(fileIn,
         temp$nlt <- "PROMOTE_TO_MULTI"
     }
     
-    #DEFINITELY should not be assuming British Grid, should add a projection    To do
-    #   override option to the CSV.
-    if(TRUE){
-        temp$a_srs = "EPSG:27700"
+    if(!is.na(srsIn)){
+        temp$a_srs = srsIn
     }
     
     if(!silent){
@@ -84,6 +83,7 @@ loadSpatialData <- function(fileIn,
             )
     }
     #Does not seem to report error messages properly like this. Fails silently  To do
+    #Ideally would try to load, then return TRUE/FALSE depending on success.    To do    
     do.call(ogr2ogr, temp)
     
     loadingCleanup(pgConnectionIn,metadataIn)

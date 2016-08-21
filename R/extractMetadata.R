@@ -2,6 +2,7 @@ extractMetadata <- function(dirIn,
                             maxLevel = 1,
                             delimiter = "$",
                             tmpdir = tempdir(),
+                            scanGeom = FALSE,
                             cleanUp = TRUE
                             ){
     
@@ -44,6 +45,7 @@ extractMetadata <- function(dirIn,
                            append = 0,
                            loaded = -1,
                            assignSRS = "EPSG:27700",
+                           geom_type = "Not scanned",
                            stringsAsFactors  = FALSE
                            )
         
@@ -114,6 +116,8 @@ extractMetadata <- function(dirIn,
 }
 
 providerFormat <- function(textIn){
+#Reformats a string to the format I'm using for providers (upper case first
+#   letters with spaces between words).
     textUse  <- gsub("_", " ", textIn)
     
     textList <- strsplit(textUse, " ")
@@ -134,16 +138,8 @@ extractToCsv <- function(dirIn, pathOut, maxLevel = 1, overwrite = FALSE){
     
     outputRows <- extractMetadata(dirIn, maxLevel = maxLevel, cleanUp = TRUE)
     
-    newFile <- file.exists(pathOut) & !overwrite
     
-    write.table(x = outputRows,
-                file = pathOut,
-                sep = ",",
-                append = newFile,
-                na = "",
-                row.names = FALSE,
-                col.names = !newFile
-                )
+    writeMetadataCsv(outputRows, pathOut, overwrite)
     
     return(pathOut)
 }

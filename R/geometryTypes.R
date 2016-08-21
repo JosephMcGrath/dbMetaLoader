@@ -1,4 +1,6 @@
 geometryTypes <- function(pathIn, geometryColumn = "Geometry"){
+    library("gdalUtils")
+    
     sqlName <- head(unlist(strsplit(tail(unlist(strsplit(pathIn, "\\\\|/")), 1),
                                     "\\."
                                     )
@@ -31,5 +33,15 @@ geometryTypes <- function(pathIn, geometryColumn = "Geometry"){
     
     testOut <- gsub(" ", "", testOut)
     
+    testOut <- testOut
+    
     return(testOut)
+}
+
+geometryString <- function(pathIn, geometryColumn = "Geometry"){
+    ret <- geometryTypes(pathIn, geometryColumn)
+    
+    ret <- paste(ret, collapse = ":")
+    
+    return(ret)
 }

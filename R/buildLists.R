@@ -10,6 +10,8 @@ buildPGConnection <- function(dbNameIn,
 #
 #Returns a list containing the connection info.
 #
+
+    #Perform some form of check on data types beforehand                        To do
     ret <- c(dbname   = as.character(dbNameIn),
              host     = as.character(hostIn),
              port     = as.character(portIn),
@@ -59,7 +61,7 @@ buildMetaData <- function(tableIn,
                 )
     
     #Replace copyright symbol with (C) as it causes errors otherwise.
-    ret$attribution <- gsub(intToUtf8(strtoi("0xA9")), "(C)", ret)
+    ret$attribution <- gsub(intToUtf8(strtoi("0xA9")), "(C)", ret$attribution)
     #Could also replace other characters that cause issues.                     To do
     
     if(!silent){

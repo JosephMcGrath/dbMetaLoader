@@ -10,6 +10,7 @@ loadingCleanup <- function(pgConnectionIn, metadataIn){
     on.exit(dbDisconnect(dbCon))
     
     vacuumStatement <- sprintf("VACUUM FULL %s;", metadataIn$tablenameDq)
+    #Replace "(C)" in the metadata with the copyright symbol                    To do
     
     dbSendQuery(dbCon, vacuumStatement)
 }
