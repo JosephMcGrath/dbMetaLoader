@@ -18,7 +18,7 @@ writeMetadata <- function(pgConnectionIn,
     on.exit(dbDisconnect(dbCon))
     
     if(!silent){
-        cat("Writing metadata to database.")
+        cat("Writing metadata to database.\n")
     }
     
     #Assumes the table exists.                                                  To do

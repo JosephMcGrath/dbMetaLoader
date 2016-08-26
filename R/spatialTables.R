@@ -22,7 +22,7 @@ spatialTables <- function(type = "table"){
                                    )
                                   )
     }
-
+    
     if("container" %in% type){
         fileExtensions <- append(fileExtensions,
                                  c("\\.zip$" #Windows Zip archive

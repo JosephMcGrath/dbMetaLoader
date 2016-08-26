@@ -77,7 +77,7 @@ loadSpatialData <- function(fileIn,
     
     if(!silent){
         print(temp)
-        cat(sprintf("Parameters to pass to ogr2ogr:\n\t:%s",
+        cat(sprintf("Parameters to pass to ogr2ogr:\n\t:%s\n",
                     paste(names(temp), temp, sep = " = ", collapse = "\n\t")
                     )
             )

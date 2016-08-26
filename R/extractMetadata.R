@@ -136,8 +136,12 @@ providerFormat <- function(textIn){
 
 extractToCsv <- function(dirIn, pathOut, maxLevel = 1, overwrite = FALSE){
     
+    #Some form of checks for the inputs here?                                   To do
+    
     outputRows <- extractMetadata(dirIn, maxLevel = maxLevel, cleanUp = TRUE)
     
+    outputRows$multigeom <- as.numeric(outputRows$multigeom)
+    outputRows$append <- as.numeric(outputRows$append)
     
     writeMetadataCsv(outputRows, pathOut, overwrite)
     

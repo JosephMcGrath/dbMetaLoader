@@ -11,6 +11,10 @@ loadDataFromSource <- function(metadataIn,
             #A more efficient approach would be to evaluate all the rows that   To do
             #   need some form of preprocessing/extraction and do that all at
             #   one time.
+            #   Could load all the data from a single source at once.
+            #Might be best to output progress more regularly.                   To do
+            #   Maybe load up to X lines at a time?
+            #   Or break after loading each row?
             newRow <- loadRow(curRow, pgConnectionIn, metadataTable)
             
             metadataIn[i, ] <- newRow
@@ -26,7 +30,9 @@ loadDataFromSource <- function(metadataIn,
 
 loadRow <- function(rowIn,
                     pgConnectionIn,
-                    metadataTable = "\"metadata\".\"metainfo\""){
+                    metadataTable = "\"metadata\".\"metainfo\"",
+                    fullScan = TRUE
+                    ){
     
     metaTemp <- buildMetaData(tableIn          = rowIn$table,
                               schemaIn         = rowIn$schema,
@@ -45,9 +51,10 @@ loadRow <- function(rowIn,
     
     rowOut <- rowIn
     
-    rowOut$geom_types <- geometryString(tempPath)
-    rowOut$multigeom <- isMulti(rowOut$geom_types)
-    
+    if(fullScan){
+        rowOut$geom_type <- geometryString(tempPath)
+        rowOut$multigeom <- isMulti(rowOut$geom_type)
+    }
     
     #May want this returning something?                                         To do
     loadSpatialData(fileIn         = tempPath,
@@ -85,6 +92,10 @@ loadDataFromCsv <- function(csvPath,
 }
 
 writeMetadataCsv <- function(dataIn, pathIn, overwrite = FALSE){
+    
+    #Force boolean data types into 0/1                                          To do  
+    dataIn$multigeom <- as.numeric(dataIn$multigeom)
+    dataIn$append <- as.numeric(dataIn$append)      
     
     #Unless specified, append to an existing file rather than replacing it.
     newFile <- file.exists(pathIn) & !overwrite

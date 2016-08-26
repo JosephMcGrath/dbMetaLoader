@@ -11,7 +11,14 @@ extractZip <- function(pathIn, delimiter = "$", cleanUp = TRUE){
         pathOut <- tempExtractPath()
         
         #Ideally focus down the extraction process                              To do
-        fileList <- unzip(splitPath[1], exdir = pathOut)
+        target <- splitPath[2]
+        target <- dropExtensions(target)
+        
+        fullList <- unzip(splitPath[1], list = TRUE)$Name
+        
+        target <- grep(target, fullList, fixed = TRUE, value = TRUE)
+        
+        fileList <- unzip(splitPath[1], exdir = pathOut, files = target)
         
         newPath <- paste(tail(splitPath, dCount),
                          sep = delimiter,

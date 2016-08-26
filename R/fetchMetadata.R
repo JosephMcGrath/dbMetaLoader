@@ -19,7 +19,7 @@ fetchMetadata <- function(pgConnectionIn,
     }
     
     if(!silent){
-        cat("Connecting to PostGreSQL database.")
+        cat("Connecting to PostGreSQL database.\n")
     }
     
     dbCon <- postGresConnect(pgConnectionIn)
@@ -70,12 +70,12 @@ fetchMetadata <- function(pgConnectionIn,
     if(nrow(res) > 0){
         ret <- res[1, "id"]
         if(!silent){
-            cat(sprintf("Metadata found - id of: %s", ret))
+            cat(sprintf("Metadata found - id of: %s\n", ret))
         }
     } else {
         ret <- NA
         if(!silent){
-            cat("Metadata not found.")
+            cat("Metadata not found.\n")
         }
     }
     

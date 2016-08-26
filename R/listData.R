@@ -89,6 +89,8 @@ resolveRow <- function(tableIn, rowIn, tmpdir = tempdir()){
         pathUse <- tableOut[rowIn, "dsn"]
     }
     
+    print(pathUse)
+    
     #If it's a directory
     if(dir.exists(pathUse)){
         filesIn <- list.files(pathUse,
@@ -96,12 +98,13 @@ resolveRow <- function(tableIn, rowIn, tmpdir = tempdir()){
                               #full.name = TRUE
                               )
     #If it's a zip files
-    } else if(grep("(?i)\\.zip$", pathUse)){
+    } else if(length(grep("(?i)\\.zip$", pathUse))){
         filesIn <- unzip(pathUse, list = TRUE)$Name
     }
     
     #3 Use that list to get a full list of all tables and containers.
     #Get all of the tables
+    #Skip if tablesOut doesn't exist                                            To do
     tablesOut <- grep(spatialTables("table"), filesIn, value = TRUE)
     
     tablesOut <- tablesOut[!tablesOut %in% tableOut[, "dsn"]]
